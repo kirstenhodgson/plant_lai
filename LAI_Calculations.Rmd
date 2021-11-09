@@ -1,0 +1,49 @@
+---
+title: "LAI Calculations"
+author: "Kirsten Hodgson"
+date: "11/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(janitor)
+library(here)
+```
+
+```{r}
+#Read in data
+lai_data <- read_csv(here("LAI_WOODY_PLANTS_1231", "data", "LAI_Woody_Plants_Database.csv"), skip = 5)
+```
+
+```{r}
+#Wrangling
+lai_ca_or <- lai_data %>% 
+  as.data.frame() %>% 
+  filter(stringr::str_detect(Location, "CA|California|Oregon|California's|Western Montane")) %>% 
+  select(Publication_year, Corrected_total_LAI_HSA, Stand_age, Dominant_species, PFT3, PFT4, Location)
+
+lai_by_type <- lai_ca_or %>% 
+  group_by(PFT3) %>% 
+  mutate(lai = as.numeric(Corrected_total_LAI_HSA)) %>% 
+  summarize(mean_lai = mean(lai),
+            Kc = mean_lai/3)
+
+lai_mixed <- lai_data %>% 
+  filter(PFT3 == "MIX") %>% 
+  select(Publication_year, Corrected_total_LAI_HSA, Stand_age, Dominant_species, PFT3, PFT4, Country, Location) %>% 
+  mutate(lai = as.numeric(Corrected_total_LAI_HSA)) %>% 
+  summarize(mean_lai = mean(lai),
+            Kc = mean_lai/3)
+
+lai_shrub <- lai_data %>% 
+  filter(PFT1 %in% c("SHRUB+MOSS", "SHRUB", "SHRUB+GRASS", "SHRUB+WOODY")) %>% 
+  select(Publication_year, Corrected_total_LAI_HSA, Stand_age, Dominant_species, PFT1, PFT3, PFT4, Country, Location) %>% 
+  mutate(lai = as.numeric(Corrected_total_LAI_HSA)) %>% 
+  summarize(mean_lai = mean(lai),
+            Kc = mean_lai/3)
+ 
+```
+
